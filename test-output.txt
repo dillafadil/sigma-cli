@@ -1,0 +1,67 @@
+
+> sigma-cli@0.5.0 test
+> jest
+
+FAIL test/review.test.js
+  ΓùÅ parseReviewResponse ΓÇ║ parses full review response with sections and items
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 3
+    Received: 1
+
+      63 |       const result = parseReviewResponse(response);
+      64 |   
+    > 65 |       expect(result.sections.length).toBe(3);
+         |                                      ^
+      66 |   
+      67 |       expect(result.sections[0].name).toBe('Potential Bugs');
+      68 |       expect(result.sections[0].items.length).toBe(2);
+
+      at Object.toBe (test/review.test.js:65:38)
+
+  ΓùÅ parseReviewResponse ΓÇ║ handles empty sections
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 3
+    Received: 1
+
+       97 |   
+       98 |       const result = parseReviewResponse(response);
+    >  99 |       expect(result.sections.length).toBe(3);
+          |                                      ^
+      100 |       expect(result.sections[0].items.length).toBe(0);
+      101 |       expect(result.sections[1].items.length).toBe(1);
+      102 |       expect(result.sections[2].items.length).toBe(0);
+
+      at Object.toBe (test/review.test.js:99:38)
+
+  ΓùÅ parseReviewResponse ΓÇ║ fallback to info severity for items without [severity:line]
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: "Some plain text finding without severity"
+    Received: "- Some plain text finding without severity"
+
+      111 |       expect(result.sections[0].items[0].severity).toBe('info');
+      112 |       expect(result.sections[0].items[0].line).toBeNull();
+    > 113 |       expect(result.sections[0].items[0].text).toBe('Some plain text finding without severity');
+          |                                                ^
+      114 |     });
+      115 |   
+      116 |     test('returns empty sections for null/empty response', () => {
+
+      at Object.toBe (test/review.test.js:113:48)
+
+PASS test/filesystem.test.js
+PASS test/history.test.js
+PASS test/config.test.js
+PASS test/ollama.test.js
+PASS test/logger.test.js
+
+Test Suites: 1 failed, 5 passed, 6 total
+Tests:       3 failed, 79 passed, 82 total
+Snapshots:   0 total
+Time:        0.981 s, estimated 1 s
+Ran all test suites.
