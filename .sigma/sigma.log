@@ -1,0 +1,10 @@
+[2026-04-16T12:02:25.488Z] [ERROR] ollama failed: Ollama error: 404 Not Found
+[2026-04-16T12:02:25.500Z] [ERROR] ollama failed: Response Ollama tidak valid: tidak ada content
+[2026-04-16T12:02:25.501Z] [ERROR] ollama failed: Response Ollama tidak valid: tidak ada content
+[2026-04-16T12:02:25.502Z] [ERROR] ollama failed: Network error
+[2026-04-16T12:02:50.420Z] [INFO] config: log_level = debug
+[2026-04-16T12:02:50.835Z] [INFO] read: app.js
+[2026-04-16T12:06:41.128Z] [ERROR] ollama failed: Ollama error: 404 Not Found
+[2026-04-16T12:06:41.133Z] [ERROR] ollama failed: Response Ollama tidak valid: tidak ada content
+[2026-04-16T12:06:41.134Z] [ERROR] ollama failed: Response Ollama tidak valid: tidak ada content
+[2026-04-16T12:06:41.135Z] [ERROR] ollama failed: Network error

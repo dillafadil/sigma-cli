@@ -1,0 +1,24 @@
+{
+  "name": "sigma-cli",
+  "version": "0.4.1",
+  "description": "AI CLI assistant powered by Ollama",
+  "bin": {
+    "sigma": "./bin/sigma.js"
+  },
+  "scripts": {
+    "test": "jest"
+  },
+  "license": "ISC",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "chalk": "^4.1.2",
+    "commander": "^14.0.3",
+    "glob": "^7.2.3",
+    "readline-sync": "^1.4.10"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0"
+  }
+}

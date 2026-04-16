@@ -1,0 +1,3 @@
+total
+counter
+discount

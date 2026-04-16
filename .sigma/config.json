@@ -1,0 +1,8 @@
+{
+  "mode": "local",
+  "model": "qwen2.5:3b",
+  "base_url": "http://localhost:11434",
+  "context_limit": 3,
+  "max_lines_per_file": "200",
+  "log_level": "debug"
+}
