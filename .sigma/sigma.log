@@ -8,3 +8,7 @@
 [2026-04-16T12:06:41.133Z] [ERROR] ollama failed: Response Ollama tidak valid: tidak ada content
 [2026-04-16T12:06:41.134Z] [ERROR] ollama failed: Response Ollama tidak valid: tidak ada content
 [2026-04-16T12:06:41.135Z] [ERROR] ollama failed: Network error
+[2026-04-16T14:41:05.290Z] [ERROR] ollama failed: Ollama error: 404 Not Found
+[2026-04-16T14:41:05.308Z] [ERROR] ollama failed: Response Ollama tidak valid: tidak ada content
+[2026-04-16T14:41:05.309Z] [ERROR] ollama failed: Response Ollama tidak valid: tidak ada content
+[2026-04-16T14:41:05.309Z] [ERROR] ollama failed: Network error

@@ -12,6 +12,7 @@ const { startChat } = require('../lib/chat');
 const { getConfig, setConfig } = require('../lib/config');
 const { getHistory, clearHistory } = require('../lib/history');
 const logger = require('../lib/logger');
+const { parseReviewResponse, reviewToJson, severityColor, severityIcon } = require('../lib/review');
 const {
   readFile, readMultipleFiles, writeFile,
   backupFile, findBackup, restoreBackup,
@@ -87,7 +88,7 @@ const program = new Command();
 program
   .name('sigma')
   .description('Sigma CLI — AI-powered terminal assistant menggunakan Ollama')
-  .version('0.4.1')
+  .version('0.5.0')
   .addHelpText('after', `
 Contoh:
   sigma chat "apa itu closure?"        # satu kali tanya
@@ -96,7 +97,7 @@ Contoh:
   sigma review app.js                  # code review AI
   sigma --help                         # lihat semua command
 
-Docs: https://github.com/sigma-cli/sigma-cli
+Docs: https://github.com/dillafadil/sigma-cli
 `);
 
 // ── chat ──────────────────────────────────────────────
@@ -485,23 +486,30 @@ Contoh:
 // ── review ────────────────────────────────────────────
 program
   .command('review')
-  .description('AI review kode tanpa mengubah file (read-only)')
+  .description('AI review kode dengan severity rating dan line numbers')
   .argument('<file>', 'Path ke file')
   .argument('[focus]', 'Fokus review opsional (contoh: "performance", "security")')
+  .option('-f, --format <type>', 'Output format: text atau json', 'text')
   .addHelpText('after', `
-Section output:
-  [Potential Bugs]   → bug dan runtime error yang terdeteksi
-  [Code Quality]     → code smell, anti-pattern, readability
-  [Suggestions]      → rekomendasi perbaikan
+Severity:
+  🔴 critical  → harus diperbaiki segera
+  🟡 warning   → sebaiknya diperbaiki
+  🟢 info      → saran perbaikan
+
+Output format:
+  --format text  (default) tampilan berwarna di terminal
+  --format json  output JSON untuk tool integration
 
 Contoh:
   sigma review app.js
   sigma review app.js "performance"
   sigma review app.js "security and error handling"
+  sigma review app.js --format json
+  sigma review app.js "security" --format json
 `)
-  .action(async (file, focus) => {
+  .action(async (file, focus, options) => {
     try {
-      logger.info(`review: ${file}${focus ? ` focus="${focus}"` : ''}`);
+      logger.info(`review: ${file}${focus ? ` focus="${focus}"` : ''} format=${options.format}`);
 
       const result = readFile(file);
 
@@ -511,7 +519,6 @@ Contoh:
       const fullPrompt = `You are a senior software engineer conducting a code review.
 
 Review this code for:
-
 - Potential bugs or runtime errors
 - Code smells or anti-patterns
 - Poor naming or readability issues
@@ -522,52 +529,73 @@ Review this code for:
 
 ${focus ? `Focus area: ${focus}\n\n` : ''}
 
-FILE:
-${result.content}
+FILE (line numbers added for reference):
+${result.content.split('\n').map((line, i) => `${i + 1}: ${line}`).join('\n')}
 
-OUTPUT FORMAT:
+OUTPUT FORMAT — follow EXACTLY:
 [Potential Bugs]
-- ...
+- [critical:LINE] description
+- [warning:LINE] description
 
 [Code Quality]
-- ...
+- [warning:LINE] description
+- [info:LINE] description
 
 [Suggestions]
-- ...
+- [info:LINE] description
 
-Do not output anything else.`;
+RULES:
+- LINE is the line number where the issue is found
+- Severity: critical (must fix), warning (should fix), info (suggestion)
+- Each item MUST have [severity:line] format
+- Do not output anything else
+- If no issues found in a section, output the header with no items`;
 
       console.log(chalk.yellow('⏳ Analyzing code...'));
 
       const response = await chat(fullPrompt);
 
-      let currentSection = '';
-      const lines = response.split('\n');
-      for (const line of lines) {
-        if (line.startsWith('[Potential Bugs]')) {
-          currentSection = 'bugs';
-          console.log(chalk.red(line));
-        } else if (line.startsWith('[Code Quality]')) {
-          currentSection = 'quality';
-          console.log(chalk.yellow(line));
-        } else if (line.startsWith('[Suggestions]')) {
-          currentSection = 'suggestions';
-          console.log(chalk.green(line));
-        } else if (line.trim() === '') {
-          console.log();
-        } else if (line.startsWith('- ') && currentSection) {
-          switch (currentSection) {
-            case 'bugs': console.log(chalk.red(line)); break;
-            case 'quality': console.log(chalk.yellow(line)); break;
-            case 'suggestions': console.log(chalk.green(line)); break;
-            default: console.log(line); break;
+      logger.debug(`review: raw response ${response.length} chars`);
+
+      const parsed = parseReviewResponse(response);
+
+      if (options.format === 'json') {
+        const json = reviewToJson(result.path, parsed);
+        console.log(json);
+      } else {
+        // Text format with colors
+        let totalCritical = 0;
+        let totalWarning = 0;
+        let totalInfo = 0;
+
+        parsed.sections.forEach((section) => {
+          console.log(chalk.cyan(`\n[${section.name}]`));
+
+          if (section.items.length === 0) {
+            console.log(chalk.gray('  (tidak ada temuan)'));
           }
-        } else {
-          console.log(line);
-        }
+
+          section.items.forEach((item) => {
+            const color = severityColor(item.severity);
+            const icon = severityIcon(item.severity);
+            const lineStr = item.line !== null ? `L${item.line}` : 'L?';
+            console.log(chalk[color](`  ${icon} [${item.severity}:${lineStr}] ${item.text}`));
+
+            if (item.severity === 'critical') totalCritical++;
+            else if (item.severity === 'warning') totalWarning++;
+            else totalInfo++;
+          });
+        });
+
+        // Summary
+        console.log(chalk.cyan('\n── Summary ─────────────────────────────'));
+        console.log(`  ${chalk.red(`🔴 Critical: ${totalCritical}`)}`);
+        console.log(`  ${chalk.yellow(`🟡 Warning:  ${totalWarning}`)}`);
+        console.log(`  ${chalk.green(`🟢 Info:     ${totalInfo}`)}`);
+        console.log(chalk.cyan('─────────────────────────────────────────\n'));
       }
 
-      logger.info('review: completed');
+      logger.info(`review: completed — ${parsed.sections.reduce((sum, s) => sum + s.items.length, 0)} items`);
 
     } catch (err) {
       logger.error(`review: ${err.message}`);
