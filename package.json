@@ -1,6 +1,6 @@
 {
   "name": "sigma-cli",
-  "version": "0.4.1",
+  "version": "0.5.0",
   "description": "AI CLI assistant powered by Ollama",
   "bin": {
     "sigma": "./bin/sigma.js"
